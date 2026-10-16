@@ -1,0 +1,990 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Harekat Operasyon Checklist</title>
+  <style>
+    :root {
+      --bg: #0b1120;
+      --card: #1e293b;
+      --card-done: #132238;
+      --border: #334155;
+      --text: #f8fafc;
+      --muted: #94a3b8;
+      --accent: #38bdf8;
+      --success: #22c55e;
+      --warn: #f59e0b;
+      --danger: #ef4444;
+      --quote-bg: #0f172a;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+    body { background: var(--bg); color: var(--text); padding-bottom: 70px; -webkit-tap-highlight-color: transparent; }
+
+    /* Sticky Header & Nav */
+    .sticky-top { position: sticky; top: 0; z-index: 100; background: rgba(11, 17, 32, 0.95); backdrop-filter: blur(8px); border-bottom: 1px solid var(--border); padding: 10px 12px; }
+    .progress-bar { width: 100%; height: 6px; background: var(--border); border-radius: 4px; overflow: hidden; margin-bottom: 8px; }
+    .progress-fill { height: 100%; background: var(--success); width: 0%; transition: width 0.3s ease; }
+    .top-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; font-size: 0.82rem; color: var(--muted); }
+    .nav-tabs { display: flex; gap: 6px; }
+    .nav-btn { flex: 1; padding: 8px; border: 1px solid var(--border); background: var(--card); color: var(--muted); border-radius: 6px; font-weight: 700; font-size: 0.8rem; cursor: pointer; }
+    .nav-btn.active { background: var(--accent); color: #000; border-color: var(--accent); }
+
+    .container { padding: 12px; }
+
+    /* Flight Header Card */
+    .flight-card { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 10px; margin-bottom: 12px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+    .flight-card label { display: block; font-size: 0.7rem; color: var(--muted); margin-bottom: 3px; }
+    .flight-card input { width: 100%; padding: 7px; background: var(--bg); border: 1px solid var(--border); color: var(--text); border-radius: 6px; font-weight: 700; text-transform: uppercase; font-size: 0.9rem; }
+
+    /* Step Cards */
+    .step-card { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 12px; margin-bottom: 10px; transition: border-color 0.2s; }
+    .step-card.completed { border-color: rgba(34, 197, 94, 0.45); background: var(--card-done); }
+    .step-header { display: flex; align-items: flex-start; gap: 8px; margin-bottom: 8px; }
+    .step-num { background: var(--accent); color: #000; font-weight: 800; font-size: 0.78rem; padding: 2px 7px; border-radius: 5px; flex-shrink: 0; margin-top: 2px; }
+    .step-card.completed .step-num { background: var(--success); color: #000; }
+    .step-title { font-size: 0.93rem; font-weight: 600; line-height: 1.35; }
+
+    /* Script / Callout Quotes */
+    .script-box { background: var(--quote-bg); border-left: 3px solid var(--warn); padding: 8px 10px; border-radius: 6px; margin: 6px 0; font-size: 0.84rem; line-height: 1.4; color: #fde68a; }
+    .script-box strong { color: #fff; }
+
+    /* Sub-items & Checkboxes */
+    .sub-list { display: flex; flex-direction: column; gap: 6px; margin-top: 8px; }
+    .sub-item { display: flex; align-items: center; justify-content: space-between; background: rgba(15, 23, 42, 0.6); padding: 8px 10px; border-radius: 7px; border: 1px solid rgba(51, 65, 85, 0.6); gap: 8px; }
+    .sub-left { display: flex; align-items: center; gap: 10px; flex: 1; cursor: pointer; }
+    .sub-left input[type="checkbox"] { width: 20px; height: 20px; accent-color: var(--success); flex-shrink: 0; cursor: pointer; }
+    .sub-label { font-size: 0.88rem; line-height: 1.3; }
+    .sub-item.checked .sub-label { text-decoration: line-through; color: var(--muted); }
+
+    /* Inputs inside steps */
+    .time-input { background: var(--bg); border: 1px solid var(--accent); color: var(--accent); padding: 5px 6px; border-radius: 6px; font-weight: 700; font-size: 0.85rem; width: 92px; text-align: center; flex-shrink: 0; }
+    .inline-input { background: var(--bg); border: 1px solid var(--border); color: var(--text); padding: 6px 8px; border-radius: 6px; font-size: 0.88rem; width: 115px; text-align: right; font-weight: 600; }
+    .calc-badge { background: rgba(56, 189, 248, 0.15); color: var(--accent); padding: 2px 6px; border-radius: 4px; font-weight: 700; font-size: 0.8rem; margin-left: 4px; }
+
+    /* 29-35 Arası Özel Yükleme Tablosu (5 Ambar) */
+    .loading-panel { background: linear-gradient(180deg, #172554 0%, #1e293b 100%); border: 2px solid var(--accent); border-radius: 12px; padding: 12px; margin: 14px 0; }
+    .loading-panel-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+    .loading-panel-title { font-size: 0.95rem; font-weight: 800; color: var(--accent); text-transform: uppercase; letter-spacing: 0.3px; }
+    .mode-switch { display: flex; background: var(--bg); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; margin-bottom: 12px; }
+    .mode-btn { flex: 1; padding: 9px; border: none; background: transparent; color: var(--muted); font-weight: 800; font-size: 0.83rem; cursor: pointer; transition: 0.2s; }
+    .mode-btn.active { background: var(--accent); color: #000; }
+
+    .ambar-box { background: rgba(11, 17, 32, 0.75); border: 1px solid var(--border); border-radius: 9px; padding: 10px; margin-bottom: 8px; transition: border-color 0.2s; }
+    .ambar-box.match-ok { border-color: var(--success); }
+    .ambar-box.match-diff { border-color: var(--warn); }
+
+    .ambar-top-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+    .ambar-title { font-weight: 800; color: var(--accent); font-size: 0.92rem; }
+    .status-pill { font-size: 0.73rem; font-weight: 700; padding: 2px 8px; border-radius: 12px; background: #1e293b; color: var(--muted); }
+    .status-pill.ok { background: rgba(34, 197, 94, 0.2); color: var(--success); }
+    .status-pill.diff { background: rgba(245, 158, 11, 0.2); color: var(--warn); }
+
+    .ambar-nums-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin-bottom: 8px; }
+    .num-field label { display: block; font-size: 0.68rem; color: var(--muted); margin-bottom: 2px; }
+    .num-field input { width: 100%; padding: 7px 6px; background: var(--bg); border: 1px solid var(--border); color: var(--text); border-radius: 6px; font-weight: 700; font-size: 0.9rem; text-align: right; }
+
+    .ambar-text-row label { display: block; font-size: 0.72rem; color: #cbd5e1; margin-bottom: 3px; font-weight: 600; }
+    .ambar-text-row input { width: 100%; padding: 8px 10px; background: var(--bg); border: 1px solid var(--border); color: var(--text); border-radius: 6px; font-size: 0.88rem; }
+
+    .loading-totals-bar { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 10px; margin-top: 6px; text-align: center; }
+    .tot-box span { display: block; font-size: 0.68rem; color: var(--muted); }
+    .tot-box strong { font-size: 0.98rem; color: var(--success); }
+
+    .jump-banner { background: rgba(56, 189, 248, 0.12); border: 1px dashed var(--accent); border-radius: 8px; padding: 8px 10px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; font-size: 0.82rem; }
+    .jump-btn { background: var(--accent); color: #000; border: none; border-radius: 5px; padding: 5px 9px; font-weight: 700; font-size: 0.78rem; cursor: pointer; }
+
+    /* Offloading Table in CPT View */
+    .cpt-card { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 12px; margin-bottom: 14px; }
+    .cpt-card h3 { font-size: 0.92rem; color: var(--accent); margin-bottom: 10px; text-transform: uppercase; }
+    table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+    th { text-align: left; color: var(--muted); font-size: 0.74rem; padding-bottom: 6px; border-bottom: 1px solid var(--border); }
+    td { padding: 6px 3px; border-bottom: 1px solid var(--border); }
+    td input { width: 100%; padding: 7px 6px; background: var(--bg); border: 1px solid var(--border); color: var(--text); border-radius: 5px; font-size: 0.88rem; }
+    td input[type="number"] { text-align: right; font-weight: 600; }
+    .cpt-name { font-weight: 700; color: var(--accent); width: 65px; }
+    .totals-row td { font-weight: 800; color: var(--success); padding-top: 10px; border-bottom: none; font-size: 0.92rem; }
+
+    /* Bottom Action Buttons */
+    .bottom-actions { display: flex; gap: 8px; margin-top: 16px; }
+    .btn { flex: 1; padding: 12px; border: none; border-radius: 8px; font-weight: 700; font-size: 0.9rem; cursor: pointer; }
+    .btn-copy { background: var(--accent); color: #000; }
+    .btn-reset { background: var(--danger); color: #fff; }
+  </style>
+</head>
+<body>
+
+  <!-- ÜST SABİT PANEL -->
+  <div class="sticky-top">
+    <div class="top-bar">
+      <span id="progressText">İlerleme: 0 / 43 Adım</span>
+      <span id="flightSummaryBadge">Sefer Girilmedi</span>
+    </div>
+    <div class="progress-bar">
+      <div class="progress-fill" id="progressFill"></div>
+    </div>
+    <div class="nav-tabs">
+      <button class="nav-btn active" id="btnTabChecklist" onclick="switchView('checklist')">📋 Checklist (1-43)</button>
+      <button class="nav-btn" id="btnTabJumpLoad" onclick="jumpToLoadingTable()">📤 Yükleme (29-35)</button>
+      <button class="nav-btn" id="btnTabCpt" onclick="switchView('cpt')">📥 İnen Yük (Offload)</button>
+    </div>
+  </div>
+
+  <div class="container">
+    <!-- UÇUŞ BİLGİLERİ -->
+    <div class="flight-card">
+      <div>
+        <label>Sefer No</label>
+        <input type="text" id="flightNo" placeholder="TK..." oninput="saveHeader()">
+      </div>
+      <div>
+        <label>Tescil (Reg)</label>
+        <input type="text" id="acReg" placeholder="TC-..." oninput="saveHeader()">
+      </div>
+      <div>
+        <label>Şut / Park</label>
+        <input type="text" id="standNo" placeholder="Şut/Park" oninput="saveHeader()">
+      </div>
+    </div>
+
+    <!-- GÖRÜNÜM 1: 43 ADIM CHECKLIST (+ 29-35 ARASI YÜKLEME TABLOSU) -->
+    <div id="view-checklist">
+      <div id="stepsContainer"></div>
+    </div>
+
+    <!-- GÖRÜNÜM 2: OFFLOADING (İNEN YÜK) -->
+    <div id="view-cpt" style="display:none;">
+      <div class="cpt-card">
+        <h3>📥 Offloading (Geliş Boşaltma - 5 Ambar)</h3>
+        <table>
+          <thead>
+            <tr>
+              <th>Ambar</th>
+              <th>İnen Adet</th>
+              <th>Ağırlık (Kg)</th>
+              <th>Not (BY/CGO/AKE)</th>
+            </tr>
+          </thead>
+          <tbody id="offloadingBody"></tbody>
+          <tfoot>
+            <tr class="totals-row">
+              <td>TOPLAM</td>
+              <td id="offloadTotalPcs" style="text-align:right; padding-right:6px;">0</td>
+              <td id="offloadTotalKg" style="text-align:right; padding-right:6px;">0 kg</td>
+              <td></td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+    </div>
+
+    <!-- AKSİYON BUTONLARI -->
+    <div class="bottom-actions">
+      <button class="btn btn-copy" onclick="copyTurnaroundSummary()">📋 Raporu / Saatleri Kopyala</button>
+      <button class="btn btn-reset" onclick="resetAll()">🔄 Yeni Uçuş (Sıfırla)</button>
+    </div>
+  </div>
+
+<script>
+  const defaultSteps = [
+    {
+      num: 1,
+      title: "Belgeleri yanına aldığına emin ol.",
+      items: [
+        { id: "s1_1", label: "Geliş gümrük dilekçesi var mı?", checked: false },
+        { id: "s1_2", label: "Gidiş gümrük dilekçesi var mı?", checked: false },
+        { id: "s1_3", label: "Ek-10 (2 adet) var mı?", checked: false },
+        { id: "s1_4", label: "Geliş mesajı var mı?", checked: false },
+        { id: "s1_5", label: "Geliş loadsheet var mı?", checked: false },
+        { id: "s1_6", label: "Geliş yükleme var mı?", checked: false },
+        { id: "s1_7", label: "Trip info var mı?", checked: false },
+        { id: "s1_8", label: "Gidiş yükleme var mı?", checked: false }
+      ]
+    },
+    {
+      num: 2,
+      title: "Yanında alınacak ekipmanlar",
+      items: [
+        { id: "s2_1", label: "Headset var mı?", checked: false },
+        { id: "s2_2", label: "Bypass pin var mı?", checked: false },
+        { id: "s2_3", label: "Eldiven var mı?", checked: false },
+        { id: "s2_4", label: "Kulaklık var mı?", checked: false },
+        { id: "s2_5", label: "Marshall çubuğu var mı?", checked: false }
+      ]
+    },
+    {
+      num: 3,
+      title: "Flight radardan uçak gelmeden 15-20 dakika öncesinden şutaltında ol.",
+      items: [
+        { id: "s3_1", label: "Saat kaçta uçak altındaydın?", checked: false, hasTime: true, time: "" }
+      ]
+    },
+    {
+      num: 4,
+      title: "Şut altındaki ekipmanlara bak",
+      isBagCalc: true,
+      totalBag: "",
+      items: [
+        { id: "s4_1", label: "Takoz sayısı minimum 6 adet var mı?", checked: false },
+        { id: "s4_2", label: "Duba sayısı minimum 6 adet var mı?", checked: false },
+        { id: "s4_3", label: "Dolly sayısı ((Toplam Bagaj/30)+1) var mı?", calcType: "dolly", checked: false },
+        { id: "s4_4", label: "Ramp çalışan sayısı ((Toplam Bagaj/60)+1) var mı?", calcType: "worker", checked: false },
+        { id: "s4_5", label: "Boş AKE sayısı ((Toplam Bagaj/30)+1) var mı?", calcType: "ake", checked: false },
+        { id: "s4_6", label: "Eğer AKE değeri > 0 ise Highloader var mı?", checked: false },
+        { id: "s4_7", label: "Merdiven sayısı 2 adet var mı?", checked: false }
+      ]
+    },
+    {
+      num: 5,
+      title: "FOD yap",
+      items: [
+        { id: "s5_1", label: "Yaptın mı?", checked: false }
+      ]
+    },
+    {
+      num: 6,
+      title: "Postabaşı / tim lideri ile briefing yap. Boşaltma ve yükleme ile ilgili mutabık kal.",
+      items: [
+        { id: "s6_1", label: "Yaptın mı?", checked: false }
+      ]
+    },
+    {
+      num: 7,
+      title: "TK Teknik veya IGA Socar’a yakıt için uçağın frekansta olduğunu haber ver.",
+      items: [
+        { id: "s7_1", label: "Haber verildi (Saat gir)", checked: false, hasTime: true, time: "" }
+      ]
+    },
+    {
+      num: 8,
+      title: "DoCo veya Sancak’a uçağın frekansta olduğunu haber ver.",
+      items: [
+        { id: "s8_1", label: "Haber verildi (Saat gir)", checked: false, hasTime: true, time: "" }
+      ]
+    },
+    {
+      num: 9,
+      title: "Ekran çalışıyor mu? Çalışmıyorsa Marshalling yap.",
+      items: [
+        { id: "s9_1", label: "Kontrol edildi / Marshalling yapıldı", checked: false }
+      ]
+    },
+    {
+      num: 10,
+      title: "Uçak geldi. Emniyetli olunca ramp çalışanlarına takoz at işareti yap. Headsetle kaptana bağlan.",
+      scripts: [
+        "🗣️ <strong>Kaptana:</strong> \"Ground to Captain, Welcome to İstanbul.\"",
+        "⏳ <strong>Takozlar sürüyorsa:</strong> \"Please stand by on the parking brakes. Chocks are still on.\"",
+        "✅ <strong>Takozlar atıldıysa:</strong> \"You may release the brakes.\"",
+        "⚠️ <strong>Fren bırakmak istemezse:</strong> \"Sir just a reminder, if you don't want to release the brakes, you are obligated to set the brakes during the whole operation.\"",
+        "❄️ <strong>Sor:</strong> \"Do you need ACU?\""
+      ],
+      items: [
+        { id: "s10_1", label: "Kaptanla konuşuldu & takoz tamam", checked: false },
+        { id: "s10_2", label: "ACU istiyor mu? (İstiyorsa işaretle)", checked: false }
+      ]
+    },
+    {
+      num: 11,
+      title: "Kapıya bak, eğer kapıda bir sorun yoksa körüğe onay ver. ACU isteniyorsa ACU işareti yap.",
+      items: [
+        { id: "s11_1", label: "Yaptın mı? (AA Saati)", checked: false, hasTime: true, time: "" }
+      ]
+    },
+    {
+      num: 12,
+      title: "Body Check yap. Sorun varsa şefe ve kaptana bilgi vermen lazım.",
+      items: [
+        { id: "s12_1", label: "Yaptın mı?", checked: false }
+      ]
+    },
+    {
+      num: 13,
+      title: "Körüğe çık. Gendeck ve manifestoyu al.",
+      items: [
+        { id: "s13_1", label: "Gendeck alındı", checked: false },
+        { id: "s13_2", label: "Manifesto alındı", checked: false }
+      ]
+    },
+    {
+      num: 14,
+      title: "Kabine veya teknik ekibe su ve WC isterler mi diye sor. İsterlerse:",
+      items: [
+        { id: "s14_0", label: "Soruldu (İstemiyorlarsa sadece bunu tikle)", checked: false },
+        { id: "s14_1", label: "İGA Suyu ara", checked: false },
+        { id: "s14_2", label: "Gruba rampkoordineyi etiketleyerek su ister yaz", checked: false }
+      ]
+    },
+    {
+      num: 15,
+      title: "İkarus'tan geliş mesajı çek.",
+      items: [
+        { id: "s15_1", label: "Çektin mi?", checked: false }
+      ]
+    },
+    {
+      num: 16,
+      title: "Deboarding bittiyse temizliğe haber ver.",
+      items: [
+        { id: "s16_1", label: "Temizlik başladı (Saat gir)", checked: false, hasTime: true, time: "" }
+      ]
+    },
+    {
+      num: 17,
+      title: "Kaptandan Trip Info al.",
+      items: [
+        { id: "s17_1", label: "Aldın mı?", checked: false }
+      ]
+    },
+    {
+      num: 18,
+      title: "Kaptandan yakıt miktarını al, final mi diye sor.",
+      items: [
+        { id: "s18_1", label: "Yakıt miktarı (Final mi?):", checked: false, hasInput: true, inputVal: "", placeholder: "Örn: 7200 Final" }
+      ]
+    },
+    {
+      num: 19,
+      title: "Yakıtı yakıtçıya haber ver.",
+      items: [
+        { id: "s19_1", label: "Verdin mi?", checked: false }
+      ]
+    },
+    {
+      num: 20,
+      title: "Uçak altında boşaltma bitti mi kontrol et.",
+      items: [
+        { id: "s20_1", label: "Kontrol ettin mi?", checked: false }
+      ]
+    },
+    {
+      num: 21,
+      title: "Boşaltma bitti. Holdları kontrol et, Microsoft Apps'e yükle. Sorun varsa kaptana ve şefe haber ver.",
+      items: [
+        { id: "s21_1", label: "Holdları kontrol ettin & Apps'e yükledin mi?", checked: false },
+        { id: "s21_2", label: "Sorun var mı? (Sorun yoksa veya çözüldüyse tikle)", checked: false, hasInput: true, inputVal: "", placeholder: "Sorun yok / Not" }
+      ]
+    },
+    {
+      num: 22,
+      title: "Uçak altına adet sayısını sor.",
+      items: [
+        { id: "s22_1", label: "Kaç Adet çıktı?", checked: false, hasInput: true, inputVal: "", placeholder: "Adet gir" },
+        { id: "s22_2", label: "Adet sayısı geliş LIR'ıyla uyuşuyor mu?", checked: false }
+      ]
+    },
+    {
+      num: 23,
+      title: "Ekipmanların güvenliğini kontrol et.",
+      items: [
+        { id: "s23_1", label: "Kontrol ettin mi?", checked: false }
+      ]
+    },
+    {
+      num: 24,
+      title: "Su ve WC'yi kontrol et; WC’nin suyun bitmesinden sonra bağlandığını kontrol et.",
+      items: [
+        { id: "s24_1", label: "Kontrol ettin mi?", checked: false }
+      ]
+    },
+    {
+      num: 25,
+      title: "Temizlik bittiyse gruba yaz.",
+      items: [
+        { id: "s25_1", label: "Temizlik Bitti - PB: (Saat gir)", checked: false, hasTime: true, time: "" }
+      ]
+    },
+    {
+      num: 26,
+      title: "Yakıt bitti. Yakıtçıdan 3 fiş al. 1 adet kabin memuruna ver. Yakıtın bittiğini gruba yaz. Kabin memuruna sor, okeyse boarding başlat.",
+      scripts: [
+        "🗣️ <strong>Kabin Memuruna:</strong> \"Can we start Boarding?\""
+      ],
+      items: [
+        { id: "s26_1", label: "3 fiş aldın mı?", checked: false },
+        { id: "s26_2", label: "Kabin memuruna fişi verdin & gruba yazdın mı?", checked: false },
+        { id: "s26_3", label: "Boarding başlattın mı? (Saat gir)", checked: false, hasTime: true, time: "" }
+      ]
+    },
+    {
+      num: 27,
+      title: "YHM’den wheelchair, bebek arabası bilgisini al. Kaç yolcudan kaçı boarding yaptığını ve bitmesinin ne kadar süreceğini sor.",
+      items: [
+        { id: "s27_1", label: "WCHC / Bebek arabası bilgisi & Adet:", checked: false, hasInput: true, inputVal: "", placeholder: "Örn: 2 WCHC / 3 BT" }
+      ]
+    },
+    {
+      num: 28,
+      title: "Altea FM’e gir. Kaptanın verdiği Trip Info'ya göre bilgileri güncelle. Yükleme planını kontrol et. Yakıtı gir.",
+      items: [
+        { id: "s28_1", label: "Yaptın mı?", checked: false }
+      ]
+    },
+    {
+      num: 29,
+      title: "Uçak altına git yüklemeyi kontrol et. Gecikme olacak mı? İkarus’a gir ve güncelle.",
+      items: [
+        { id: "s29_1", label: "Gecikme varsa ETD / EOBT:", checked: false, hasInput: true, inputVal: "", placeholder: "ETD / EOBT yaz" },
+        { id: "s29_2", label: "İkarus'a girdin mi?", checked: false }
+      ]
+    },
+    {
+      num: 30,
+      title: "Gecikme varsa kaptana haber ver.",
+      items: [
+        { id: "s30_1", label: "Verdin mi? (Veya gecikme yok)", checked: false }
+      ]
+    },
+    {
+      num: 31,
+      title: "Manual, LMC var mı? Varsa Postabaşına haber ver.",
+      items: [
+        { id: "s31_1", label: "LMC var mı? (Kontrol edildi)", checked: false, hasInput: true, inputVal: "", placeholder: "LMC detayı / Yok" },
+        { id: "s31_2", label: "Postabaşına haber verdin mi?", checked: false }
+      ]
+    },
+    {
+      num: 32,
+      title: "Boarding bitmeye yakın sistemi aç. Her şeyi kontrol et. Boarding bitince YHM’den sistemi AF etmelerini iste. Loadsheet’i çıkart.",
+      items: [
+        { id: "s32_1", label: "LOADSHEET’İ aldın mı?", checked: false }
+      ]
+    },
+    {
+      num: 33,
+      title: "İGA Körüğü ara, 'Hazır' de.",
+      items: [
+        { id: "s33_1", label: "Yaptın mı?", checked: false }
+      ]
+    },
+    {
+      num: 34,
+      title: "Loadsheet'i kaptana ver ve imzalat.",
+      items: [
+        { id: "s34_1", label: "Yaptın mı?", checked: false, hasTime: true, time: "" }
+      ]
+    },
+    {
+      num: 35,
+      title: "Yüklemeyi kontrol et. Bittiyse ağları kontrol et. Her şey yolundaysa kapakları kapat. Body Check yap.",
+      isLoadCheckStep: true,
+      items: [
+        { id: "s35_1", label: "Kapaklar kapandı mı?", checked: false },
+        { id: "s35_2", label: "Body Check yaptın mı?", checked: false }
+      ]
+    },
+    {
+      num: 36,
+      title: "Kaptana loadingin bittiği bilgisini ver, APU çalıştırmasını söyle.",
+      items: [
+        { id: "s36_1", label: "Yaptın mı?", checked: false }
+      ]
+    },
+    {
+      num: 37,
+      title: "Uçak hazır ise kaptandan pushback okeyi al. Okey verirse öndeki takozları almaları için ramp çalışanlarına/pushbackçiye söyle. Pushback’e fren işareti yap.",
+      scripts: [
+        "🗣️ <strong>Kaptana:</strong> \"I need a clearance for pushback.\""
+      ],
+      items: [
+        { id: "s37_1", label: "Kaptandan okey aldın mı?", checked: false },
+        { id: "s37_2", label: "Pushback başladı mı?", checked: false }
+      ]
+    },
+    {
+      num: 38,
+      title: "Pushback uçağı kaldırınca ramp işçilerine takoz alın işareti yap. Kaptana fren bıraktır, pushback'e fren bırakma işareti yap.",
+      scripts: [
+        "🗣️ <strong>Kaptana:</strong> \"You can release the parking brake.\""
+      ],
+      items: [
+        { id: "s38_1", label: "Takozlar alındı mı?", checked: false },
+        { id: "s38_2", label: "Pushback hareket ediyor mu? (Başlama saati)", checked: false, hasTime: true, time: "" }
+      ]
+    },
+    {
+      num: 39,
+      title: "Kaptandan yön bilgisi al; pushbackçiye kendi burnunu göstererek uçağın burnu ve yönünü göster.",
+      items: [
+        { id: "s39_1", label: "Yaptın mı?", checked: false }
+      ]
+    },
+    {
+      num: 40,
+      title: "Pushback & Motor Çalıştırma Kuralları",
+      scripts: [
+        "⚠️ Kaptan pushback yerini güncelleyebilir, pushback’e haber ver.",
+        "⚠️ Kaptan motor çalıştırmak isterse taksi yoluna girmeden izin verme. Pushback’e sor, onay verirse izin ver.",
+        "🌧️ Hava yağmurluysa pushback bitmeden izin verme.",
+        "🔧 <strong>Motor sırası:</strong> Sırtını uçağa verince Sol taraf 1, Sağ taraf 2."
+      ],
+      items: [
+        { id: "s40_1", label: "Motor çalıştırma / Taksi yolu kontrolü tamam", checked: false }
+      ]
+    },
+    {
+      num: 41,
+      title: "Pushback bitince kaptana pushbackin bittiğini söyle ve frenlerini set etmesini söyle. Fren set edilince pushback’e fren set edildi işareti yap.",
+      items: [
+        { id: "s41_1", label: "Frenler set edildi & işaret verildi", checked: false }
+      ]
+    },
+    {
+      num: 42,
+      title: "Pushback aracı gidince bypass pinini sök ve kaptandan ayrılış onayı al.",
+      scripts: [
+        "🗣️ <strong>Pini sökünce:</strong> \"I took the bypass pin out. I am waiting your confirmation to leave.\"",
+        "🗣️ <strong>Kaptan okey verince:</strong> \"Okay captain, I will be on your left/right. Have a nice flight.\""
+      ],
+      items: [
+        { id: "s42_1", label: "Pin söküldü & kaptanla vedalaşıldı", checked: false }
+      ]
+    },
+    {
+      num: 43,
+      title: "Headseti çıkar. Dışarı yürü. Bypass pinini uçağın gideceği doğrultuda havaya kaldır.",
+      items: [
+        { id: "s43_1", label: "Bitti mi? (Bitiş saati)", checked: false, hasTime: true, time: "" }
+      ]
+    }
+  ];
+
+  const defaultAmbars = ["Ambar 1", "Ambar 2", "Ambar 3", "Ambar 4", "Ambar 5"];
+
+  let appState = {
+    flightNo: "",
+    acReg: "",
+    standNo: "",
+    loadMode: "BULK", // "BULK" veya "AKE"
+    steps: JSON.parse(JSON.stringify(defaultSteps)),
+    loading: defaultAmbars.map(a => ({
+      cpt: a,
+      planPcs: "",
+      loadPcs: "",
+      kg: "",
+      sourceText: "" // BULK ise Araba No, AKE ise AKE No
+    })),
+    offloading: defaultAmbars.map(a => ({ cpt: a, pcs: "", kg: "", note: "" }))
+  };
+
+  function getNowTime() {
+    const d = new Date();
+    return d.toTimeString().slice(0, 5);
+  }
+
+  function initApp() {
+    const saved = localStorage.getItem("harekat43State_v2");
+    if (saved) {
+      try { appState = JSON.parse(saved); } catch (e) {}
+    }
+    document.getElementById("flightNo").value = appState.flightNo || "";
+    document.getElementById("acReg").value = appState.acReg || "";
+    document.getElementById("standNo").value = appState.standNo || "";
+    updateHeaderBadge();
+    renderSteps();
+    renderOffloadTable();
+  }
+
+  function saveState() {
+    localStorage.setItem("harekat43State_v2", JSON.stringify(appState));
+    updateProgress();
+  }
+
+  function saveHeader() {
+    appState.flightNo = document.getElementById("flightNo").value.toUpperCase();
+    appState.acReg = document.getElementById("acReg").value.toUpperCase();
+    appState.standNo = document.getElementById("standNo").value.toUpperCase();
+    updateHeaderBadge();
+    saveState();
+  }
+
+  function updateHeaderBadge() {
+    const f = appState.flightNo || "---";
+    const r = appState.acReg || "---";
+    const s = appState.standNo || "---";
+    document.getElementById("flightSummaryBadge").innerText = `${f} | ${r} | Park: ${s}`;
+  }
+
+  function buildLoadingPanelHtml() {
+    const isBulk = appState.loadMode === "BULK";
+    const fieldLabel = isBulk
+      ? "🛒 Hangi Arabadan Yüklendi? (Araba / Dolly No):"
+      : "📦 Hangi AKE Yüklendi? (AKE Numaraları):";
+    const fieldPlaceholder = isBulk
+      ? "Örn: Araba 12, Araba 19, BT..."
+      : "Örn: AKE 12345 TK, AKE 67890 TK...";
+
+    const rowsHtml = appState.loading.map((row, idx) => `
+      <div class="ambar-box" id="ambarBox_${idx}">
+        <div class="ambar-top-row">
+          <span class="ambar-title">${row.cpt}</span>
+          <span class="status-pill" id="ambarStatus_${idx}">Bekliyor</span>
+        </div>
+        <div class="ambar-nums-grid">
+          <div class="num-field">
+            <label>Yüklenecek (Adet)</label>
+            <input type="number" inputmode="numeric" placeholder="0" value="${row.planPcs}" oninput="updateLoadCpt(${idx}, 'planPcs', this.value)">
+          </div>
+          <div class="num-field">
+            <label>Yüklenen (Adet)</label>
+            <input type="number" inputmode="numeric" placeholder="0" value="${row.loadPcs}" oninput="updateLoadCpt(${idx}, 'loadPcs', this.value)">
+          </div>
+          <div class="num-field">
+            <label>Ağırlık (Kg)</label>
+            <input type="number" inputmode="numeric" placeholder="0" value="${row.kg}" oninput="updateLoadCpt(${idx}, 'kg', this.value)">
+          </div>
+        </div>
+        <div class="ambar-text-row">
+          <label class="mode-dynamic-label">${fieldLabel}</label>
+          <input type="text" class="mode-dynamic-input" placeholder="${fieldPlaceholder}" value="${row.sourceText}" oninput="updateLoadCpt(${idx}, 'sourceText', this.value)">
+        </div>
+      </div>
+    `).join("");
+
+    return `
+      <div class="loading-panel" id="embeddedLoadingPanel">
+        <div class="loading-panel-header">
+          <span class="loading-panel-title">📤 Ambar Yükleme Tablosu (29 - 35 Arası)</span>
+        </div>
+        <div class="mode-switch">
+          <button type="button" class="mode-btn ${isBulk ? 'active' : ''}" id="btnModeBulk" onclick="setLoadMode('BULK')">🛒 BULK YÜKLEME</button>
+          <button type="button" class="mode-btn ${!isBulk ? 'active' : ''}" id="btnModeAke" onclick="setLoadMode('AKE')">📦 AKE (ULD) YÜKLEME</button>
+        </div>
+        ${rowsHtml}
+        <div class="loading-totals-bar">
+          <div class="tot-box">
+            <span>Yüklenecek (Plan)</span>
+            <strong id="totPlanPcs">0 Adet</strong>
+          </div>
+          <div class="tot-box">
+            <span>Yüklenen (Fiili)</span>
+            <strong id="totLoadPcs">0 Adet</strong>
+          </div>
+          <div class="tot-box">
+            <span>Toplam Ağırlık</span>
+            <strong id="totLoadKg">0 kg</strong>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  function renderSteps() {
+    const container = document.getElementById("stepsContainer");
+    container.innerHTML = "";
+
+    appState.steps.forEach((step, sIdx) => {
+      const allChecked = step.items.every(i => i.checked);
+      const card = document.createElement("div");
+      card.className = "step-card " + (allChecked ? "completed" : "");
+      card.id = "stepCard_" + step.num;
+
+      let scriptsHtml = "";
+      if (step.scripts && step.scripts.length) {
+        scriptsHtml = step.scripts.map(sc => `<div class="script-box">${sc}</div>`).join("");
+      }
+
+      let bagCalcHtml = "";
+      const bagCount = parseInt(step.totalBag) || 0;
+      const dollyNeed = step.totalBag !== "" ? Math.floor(bagCount / 30) + 1 : "?";
+      const workerNeed = step.totalBag !== "" ? Math.floor(bagCount / 60) + 1 : "?";
+      const akeNeed = step.totalBag !== "" ? Math.floor(bagCount / 30) + 1 : "?";
+
+      if (step.isBagCalc) {
+        bagCalcHtml = `
+          <div class="sub-item" style="background:#0f172a; border-color:var(--accent); margin-bottom:6px;">
+            <span style="font-size:0.85rem; font-weight:700; color:var(--accent);">🎒 Toplam Bagaj Sayısını Gir:</span>
+            <input type="number" inputmode="numeric" class="inline-input" placeholder="Adet" value="${step.totalBag}" oninput="updateBagCount(${sIdx}, this.value)">
+          </div>
+        `;
+      }
+
+      let step35BannerHtml = "";
+      if (step.isLoadCheckStep) {
+        step35BannerHtml = `
+          <div class="jump-banner">
+            <span id="step35LoadSummary">Yüklenen: 0 / 0 Adet</span>
+            <button type="button" class="jump-btn" onclick="jumpToLoadingTable()">🔼 Tabloyu Gör</button>
+          </div>
+        `;
+      }
+
+      let itemsHtml = step.items.map((item, iIdx) => {
+        let dynamicBadge = "";
+        if (item.calcType === "dolly") dynamicBadge = `<span class="calc-badge" id="badge_dolly">Gereken: ${dollyNeed}</span>`;
+        if (item.calcType === "worker") dynamicBadge = `<span class="calc-badge" id="badge_worker">Gereken: ${workerNeed}</span>`;
+        if (item.calcType === "ake") dynamicBadge = `<span class="calc-badge" id="badge_ake">Gereken: ${akeNeed}</span>`;
+
+        let rightCtrl = "";
+        if (item.hasTime) {
+          rightCtrl = `<input type="time" class="time-input" value="${item.time || ''}" onchange="updateItemTime(${sIdx}, ${iIdx}, this.value)">`;
+        } else if (item.hasInput) {
+          rightCtrl = `<input type="text" class="inline-input" placeholder="${item.placeholder || ''}" value="${item.inputVal || ''}" oninput="updateItemInput(${sIdx}, ${iIdx}, this.value)">`;
+        }
+
+        return `
+          <div class="sub-item ${item.checked ? 'checked' : ''}" id="subItem_${sIdx}_${iIdx}">
+            <label class="sub-left">
+              <input type="checkbox" ${item.checked ? 'checked' : ''} onchange="toggleSubItem(${sIdx}, ${iIdx}, this.checked)">
+              <span class="sub-label">${item.label} ${dynamicBadge}</span>
+            </label>
+            ${rightCtrl}
+          </div>
+        `;
+      }).join("");
+
+      card.innerHTML = `
+        <div class="step-header">
+          <span class="step-num">${step.num}</span>
+          <div class="step-title">${step.title}</div>
+        </div>
+        ${scriptsHtml}
+        ${bagCalcHtml}
+        ${step35BannerHtml}
+        <div class="sub-list">${itemsHtml}</div>
+      `;
+      container.appendChild(card);
+
+      // 29. Adımın hemen altına (29 ile 35 arasına) 5 Ambarlı Yükleme Tablosunu yerleştir
+      if (step.num === 29) {
+        const panelWrapper = document.createElement("div");
+        panelWrapper.innerHTML = buildLoadingPanelHtml();
+        container.appendChild(panelWrapper.firstElementChild);
+      }
+    });
+
+    refreshLoadTotalsAndStatus();
+    updateProgress();
+  }
+
+  function setLoadMode(mode) {
+    appState.loadMode = mode;
+    saveState();
+
+    const isBulk = mode === "BULK";
+    document.getElementById("btnModeBulk").classList.toggle("active", isBulk);
+    document.getElementById("btnModeAke").classList.toggle("active", !isBulk);
+
+    const fieldLabel = isBulk
+      ? "🛒 Hangi Arabadan Yüklendi? (Araba / Dolly No):"
+      : "📦 Hangi AKE Yüklendi? (AKE Numaraları):";
+    const fieldPlaceholder = isBulk
+      ? "Örn: Araba 12, Araba 19, BT..."
+      : "Örn: AKE 12345 TK, AKE 67890 TK...";
+
+    document.querySelectorAll(".mode-dynamic-label").forEach(el => el.innerText = fieldLabel);
+    document.querySelectorAll(".mode-dynamic-input").forEach(el => el.placeholder = fieldPlaceholder);
+  }
+
+  function updateLoadCpt(idx, field, val) {
+    appState.loading[idx][field] = val;
+    saveState();
+    refreshLoadTotalsAndStatus();
+  }
+
+  function refreshLoadTotalsAndStatus() {
+    let totPlan = 0, totLoad = 0, totKg = 0;
+
+    appState.loading.forEach((r, idx) => {
+      const p = parseInt(r.planPcs) || 0;
+      const l = parseInt(r.loadPcs) || 0;
+      const k = parseInt(r.kg) || 0;
+      totPlan += p;
+      totLoad += l;
+      totKg += k;
+
+      const box = document.getElementById(`ambarBox_${idx}`);
+      const pill = document.getElementById(`ambarStatus_${idx}`);
+      if (!box || !pill) return;
+
+      box.classList.remove("match-ok", "match-diff");
+      pill.classList.remove("ok", "diff");
+
+      if (r.planPcs === "" && r.loadPcs === "") {
+        pill.innerText = "Boş / Bekliyor";
+      } else if (p === l && (p > 0 || l > 0)) {
+        box.classList.add("match-ok");
+        pill.classList.add("ok");
+        pill.innerText = `✅ Tamam (${l}/${p})`;
+      } else {
+        box.classList.add("match-diff");
+        pill.classList.add("diff");
+        const diff = l - p;
+        const sign = diff > 0 ? `+${diff} LMC` : `${diff} Eksik`;
+        pill.innerText = `⚠️ ${l}/${p} (${sign})`;
+      }
+    });
+
+    const elPlan = document.getElementById("totPlanPcs");
+    const elLoad = document.getElementById("totLoadPcs");
+    const elKg = document.getElementById("totLoadKg");
+    if (elPlan) elPlan.innerText = totPlan + " Adet";
+    if (elLoad) elLoad.innerText = totLoad + " Adet";
+    if (elKg) elKg.innerText = totKg + " kg";
+
+    const elStep35 = document.getElementById("step35LoadSummary");
+    if (elStep35) {
+      elStep35.innerText = `📦 Yükleme (${appState.loadMode}): ${totLoad} / ${totPlan} Adet (${totKg} kg)`;
+    }
+  }
+
+  function jumpToLoadingTable() {
+    switchView("checklist", false);
+    const panel = document.getElementById("embeddedLoadingPanel");
+    if (panel) {
+      panel.scrollIntoView({ behavior: "smooth", block: "center" });
+    }
+  }
+
+  function toggleSubItem(sIdx, iIdx, isChecked) {
+    const item = appState.steps[sIdx].items[iIdx];
+    item.checked = isChecked;
+    if (item.hasTime && isChecked && !item.time) {
+      item.time = getNowTime();
+    }
+    saveState();
+    renderSteps();
+  }
+
+  function updateItemTime(sIdx, iIdx, val) {
+    const item = appState.steps[sIdx].items[iIdx];
+    item.time = val;
+    if (val && !item.checked) item.checked = true;
+    saveState();
+    renderSteps();
+  }
+
+  function updateItemInput(sIdx, iIdx, val) {
+    appState.steps[sIdx].items[iIdx].inputVal = val;
+    saveState();
+  }
+
+  function updateBagCount(sIdx, val) {
+    appState.steps[sIdx].totalBag = val;
+    saveState();
+    const bagCount = parseInt(val) || 0;
+    const dollyNeed = val !== "" ? Math.floor(bagCount / 30) + 1 : "?";
+    const workerNeed = val !== "" ? Math.floor(bagCount / 60) + 1 : "?";
+    const akeNeed = val !== "" ? Math.floor(bagCount / 30) + 1 : "?";
+
+    const bDolly = document.getElementById("badge_dolly");
+    const bWorker = document.getElementById("badge_worker");
+    const bAke = document.getElementById("badge_ake");
+    if (bDolly) bDolly.innerText = `Gereken: ${dollyNeed}`;
+    if (bWorker) bWorker.innerText = `Gereken: ${workerNeed}`;
+    if (bAke) bAke.innerText = `Gereken: ${akeNeed}`;
+  }
+
+  function updateProgress() {
+    const total = appState.steps.length;
+    const done = appState.steps.filter(s => s.items.every(i => i.checked)).length;
+    const pct = Math.round((done / total) * 100);
+    document.getElementById("progressText").innerText = `İlerleme: ${done} / ${total} Adım (%${pct})`;
+    document.getElementById("progressFill").style.width = pct + "%";
+  }
+
+  /* Offloading (İnen Yük) Tablosu */
+  function renderOffloadTable() {
+    const tbody = document.getElementById("offloadingBody");
+    tbody.innerHTML = "";
+    appState.offloading.forEach((row, idx) => {
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td class="cpt-name">${row.cpt}</td>
+        <td><input type="number" inputmode="numeric" placeholder="0" value="${row.pcs}" oninput="updateOffloadCell(${idx}, 'pcs', this.value)"></td>
+        <td><input type="number" inputmode="numeric" placeholder="0" value="${row.kg}" oninput="updateOffloadCell(${idx}, 'kg', this.value)"></td>
+        <td><input type="text" placeholder="BY / CGO / AKE" value="${row.note}" oninput="updateOffloadCell(${idx}, 'note', this.value)"></td>
+      `;
+      tbody.appendChild(tr);
+    });
+    calcOffloadTotals();
+  }
+
+  function updateOffloadCell(idx, field, val) {
+    appState.offloading[idx][field] = val;
+    saveState();
+    calcOffloadTotals();
+  }
+
+  function calcOffloadTotals() {
+    let pcs = 0, kg = 0;
+    appState.offloading.forEach(r => {
+      pcs += parseInt(r.pcs) || 0;
+      kg += parseInt(r.kg) || 0;
+    });
+    document.getElementById("offloadTotalPcs").innerText = pcs;
+    document.getElementById("offloadTotalKg").innerText = kg + " kg";
+  }
+
+  function switchView(view, scrollTop = true) {
+    document.getElementById("view-checklist").style.display = view === "checklist" ? "block" : "none";
+    document.getElementById("view-cpt").style.display = view === "cpt" ? "block" : "none";
+    document.getElementById("btnTabChecklist").classList.toggle("active", view === "checklist");
+    document.getElementById("btnTabCpt").classList.toggle("active", view === "cpt");
+    if (scrollTop) window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
+  function copyTurnaroundSummary() {
+    let out = `✈️ *HAREKAT TURNAROUND ÖZETİ*\n`;
+    out += `Sefer: ${appState.flightNo || "-"} | Reg: ${appState.acReg || "-"} | Park: ${appState.standNo || "-"}\n\n`;
+
+    out += `⏱️ *OPERASYON SAATLERİ & VERİLER*\n`;
+    appState.steps.forEach(s => {
+      s.items.forEach(i => {
+        if (i.hasTime && i.time) {
+          out += `• [Adım ${s.num}] ${i.label}: ${i.time}\n`;
+        }
+        if (i.hasInput && i.inputVal) {
+          out += `• [Adım ${s.num}] ${i.label} ${i.inputVal}\n`;
+        }
+      });
+    });
+
+    const sourceLabel = appState.loadMode === "BULK" ? "Araba" : "AKE";
+    const loadRows = appState.loading
+      .filter(r => r.planPcs || r.loadPcs || r.kg || r.sourceText)
+      .map(r => `  ${r.cpt}: Plan ${r.planPcs || 0} / Yüklenen ${r.loadPcs || 0} Adet | ${r.kg || 0} kg | ${sourceLabel}: ${r.sourceText || "-"}`)
+      .join("\n");
+
+    if (loadRows) {
+      const totP = document.getElementById("totPlanPcs").innerText;
+      const totL = document.getElementById("totLoadPcs").innerText;
+      const totK = document.getElementById("totLoadKg").innerText;
+      out += `\n📤 *LOADING - ${appState.loadMode}*\n${loadRows}\n  Toplam: Plan ${totP} / Yüklenen ${totL} (${totK})\n`;
+    }
+
+    const offRows = appState.offloading
+      .filter(r => r.pcs || r.kg || r.note)
+      .map(r => `  ${r.cpt}: ${r.pcs || 0} Adet / ${r.kg || 0} kg (${r.note || "-"})`)
+      .join("\n");
+
+    if (offRows) {
+      out += `\n📥 *OFFLOADING (İnen)*\n${offRows}\n  Toplam: ${document.getElementById("offloadTotalPcs").innerText} Adet / ${document.getElementById("offloadTotalKg").innerText}\n`;
+    }
+
+    navigator.clipboard.writeText(out).then(() => {
+      alert("Operasyon saatleri ve ambar yükleme özeti panoya kopyalandı!");
+    });
+  }
+
+  function resetAll() {
+    if (confirm("Mevcut uçuş verileri silinip yeni uçuşa geçilsin mi?")) {
+      localStorage.removeItem("harekat43State_v2");
+      appState = {
+        flightNo: "",
+        acReg: "",
+        standNo: "",
+        loadMode: "BULK",
+        steps: JSON.parse(JSON.stringify(defaultSteps)),
+        loading: defaultAmbars.map(a => ({ cpt: a, planPcs: "", loadPcs: "", kg: "", sourceText: "" })),
+        offloading: defaultAmbars.map(a => ({ cpt: a, pcs: "", kg: "", note: "" }))
+      };
+      initApp();
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+  }
+
+  initApp();
+</script>
+</body>
+</html>
